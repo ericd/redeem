@@ -402,6 +402,52 @@ class PathPlanner:
         
         return -z_dist+start_pos["Z"]
         
+    def xprobe(self, z, speed, accel):
+        self.wait_until_done()
+        
+        self.printer.ensure_steppers_enabled()
+        
+        # save the starting position
+        start_pos   = self.get_current_pos(ideal=True)
+        start_state = self.native_planner.getState()
+
+        # calculate how many steps the requested z movement will require
+        steps = np.ceil(z*self.printer.steps_pr_meter[2])
+        z_dist = steps/self.printer.steps_pr_meter[2]
+        logging.debug("Steps total: "+str(steps))
+        
+        # select the relative end point
+        # this is not axis_config dependent as we are not swapping 
+        # axis_config like we do when homing
+        end   = {"Z":-z_dist}
+
+        # tell the printer we are now in homing mode (updates firmware if required)        
+        self.printer.homing(True)
+        
+        # add a relative move to the path planner
+        # this tells the head to move down a set distance
+        # the probe end-stop should be triggered during this move
+        path = RelativePath(end, speed, accel, 
+                            cancelable=True, 
+                            use_bed_matrix=True, 
+                            use_backlash_compensation=True, 
+                            enable_soft_endstops=False)
+        self.add_path(path)
+        self.wait_until_done()
+
+        # get the number of steps that we haven't done 
+        steps_remaining = PruInterface.get_steps_remaining()
+        logging.debug("Steps remaining : "+str(steps_remaining))
+
+        # Calculate how many steps the Z axis moved
+        steps -= steps_remaining
+        z_dist = steps/self.printer.steps_pr_meter[2]
+        
+       	# Code to return to previous position omitted.
+	# A G28 will need to be done to re-home the axis!
+ 
+        return -z_dist+start_pos["Z"]
+
     def autocalibrate_delta_printer(self, num_factors,
                                     simulate_only,
                                     probe_points, print_head_zs):
