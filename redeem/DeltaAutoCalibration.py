@@ -32,7 +32,7 @@ import copy
 import logging
 
 import numpy as np
-from scipy.optimize import leastsq as least_squares
+from scipy.optimize import leastsq
 
 def calculate_probe_points(max_radius, radius_steps=2, angle_steps=6):
     """
@@ -345,7 +345,9 @@ def _calibrate_delta_parameters(pts, num_factors, delta_params):
 
     raw_params = delta_params.to_raw_params(num_factors)
 
-    new_raw_params = least_squares(_expected_residuals, raw_params, args=(pts, delta_params, probe_motor_positions)).x
+    new_raw_params, info = leastsq(_expected_residuals, raw_params, args=(pts, delta_params, probe_motor_positions))
+    if info not in [1, 2, 3, 4]:
+        raise RuntimeError("Scipy leastsq info code is {} and must be one of 1, 2, 3, or 4".format(info));
 
     return AutoCalibrationDeltaParameters.from_base_and_raw_params(delta_params, new_raw_params)
 
