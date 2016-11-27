@@ -20,9 +20,9 @@ import logging
 class M665(GCodeCommand):
     def execute(self, g):
         if g.has_letter("L"):
-            Delta.L = float(g.get_value_by_letter("L"))
+            Delta.L = float(g.get_value_by_letter("L")) / 1000.
         if g.has_letter("R"):
-            Delta.r = float(g.get_value_by_letter("R"))
+            Delta.r = float(g.get_value_by_letter("R")) / 1000.
             
         self.printer.path_planner.native_planner.delta_bot.setMainDimensions(Delta.Hez, Delta.L, Delta.r)
         self.printer.path_planner.native_planner.delta_bot.recalculate()
