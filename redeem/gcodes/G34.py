@@ -82,9 +82,9 @@ class G34(GCodeCommand):
         exec_and_wait("G31")
 
         # calculate the difference
-        probe_z = probe_start_z + bed_dist
+        probe_z = probe_start_z - bed_dist
         logging.debug("probe_z = %f", probe_z)
-        z_offset = probe_z - orig_z
+        z_offset = bed_dist
         logging.debug("z_offset = %f", z_offset)
 
         self.printer.send_message(
